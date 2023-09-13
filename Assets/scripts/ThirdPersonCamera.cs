@@ -4,29 +4,46 @@ using UnityEngine;
 
 public class ThirdPersonCamera : MonoBehaviour
 {
-    private float x;
-    private float y;
-    public float sensitivity = -1f;
-    public Vector3 rotate;
+   [SerializeField]
+    private float _mouseSensitivity = 3.0f;
 
-    public GameObject player;
-    private Vector3 offset = new Vector3(0, 4, -12);
+    private float _rotationY;
+    private float _rotationX;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        Cursor.lockState = CursorLockMode.Locked;
-    }
+    [SerializeField]
+    private Transform _target;
 
-    // Update is called once per frame
+    [SerializeField]
+    private float _distanceFromTarget = 3.0f;
+
+    private Vector3 _currentRotation;
+    private Vector3 _smoothVelocity = Vector3.zero;
+
+    [SerializeField]
+    private float _smoothTime = 0.2f;
+
+    [SerializeField]
+    private Vector2 _rotationXMinMax = new Vector2(-40, 40);
+
     void Update()
     {
-        y = Input.GetAxis("Mouse X");
-        x = Input.GetAxis("Mouse Y");
-        rotate = new Vector3 (x, y * sensitivity, 0); 
-        transform.eulerAngles = transform.eulerAngles - rotate;
-        
-        transform.position = player.transform.position + offset;
+        float mouseX = Input.GetAxis("Mouse X") * _mouseSensitivity;
+        float mouseY = Input.GetAxis("Mouse Y") * _mouseSensitivity;
+
+        _rotationY += mouseX;
+        _rotationX += mouseY;
+
+        // Apply clamping for x rotation 
+        _rotationX = Mathf.Clamp(_rotationX, _rotationXMinMax.x, _rotationXMinMax.y);
+
+        Vector3 nextRotation = new Vector3(_rotationX, _rotationY);
+
+        // Apply damping between rotation changes
+        _currentRotation = Vector3.SmoothDamp(_currentRotation, nextRotation, ref _smoothVelocity, _smoothTime);
+        transform.localEulerAngles = _currentRotation;
+
+        // Substract forward vector of the GameObject to point its forward vector to the target
+        transform.position = _target.position - transform.forward * _distanceFromTarget;
     }
 
 
