@@ -4,47 +4,75 @@ using UnityEngine;
 
 public class ThirdPersonCamera : MonoBehaviour
 {
-   [SerializeField]
-    private float _mouseSensitivity = 3.0f;
+   [Header("References")]
+    public Transform orientation;
+    public Transform player;
+    public Transform playerObj;
+    public Rigidbody rb;
 
-    private float _rotationY;
-    private float _rotationX;
+    public float rotationSpeed;
 
-    [SerializeField]
-    private Transform _target;
+    public Transform combatLookAt;
 
-    [SerializeField]
-    private float _distanceFromTarget = 3.0f;
+    public GameObject thirdPersonCam;
+    public GameObject combatCam;
+    public GameObject topDownCam;
 
-    private Vector3 _currentRotation;
-    private Vector3 _smoothVelocity = Vector3.zero;
-
-    [SerializeField]
-    private float _smoothTime = 0.2f;
-
-    [SerializeField]
-    private Vector2 _rotationXMinMax = new Vector2(-40, 40);
-
-    void Update()
+    public CameraStyle currentStyle;
+    public enum CameraStyle
     {
-        float mouseX = Input.GetAxis("Mouse X") * _mouseSensitivity;
-        float mouseY = Input.GetAxis("Mouse Y") * _mouseSensitivity;
-
-        _rotationY += mouseX;
-        _rotationX += mouseY;
-
-        // Apply clamping for x rotation 
-        _rotationX = Mathf.Clamp(_rotationX, _rotationXMinMax.x, _rotationXMinMax.y);
-
-        Vector3 nextRotation = new Vector3(_rotationX, _rotationY);
-
-        // Apply damping between rotation changes
-        _currentRotation = Vector3.SmoothDamp(_currentRotation, nextRotation, ref _smoothVelocity, _smoothTime);
-        transform.localEulerAngles = _currentRotation;
-
-        // Substract forward vector of the GameObject to point its forward vector to the target
-        transform.position = _target.position - transform.forward * _distanceFromTarget;
+        Basic,
+        Combat,
+        Topdown
     }
 
+    private void Start()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
 
+    private void Update()
+    {
+        // switch styles
+        if (Input.GetKeyDown(KeyCode.Alpha1)) SwitchCameraStyle(CameraStyle.Basic);
+        if (Input.GetKeyDown(KeyCode.Alpha2)) SwitchCameraStyle(CameraStyle.Combat);
+        if (Input.GetKeyDown(KeyCode.Alpha3)) SwitchCameraStyle(CameraStyle.Topdown);
+
+        // rotate orientation
+        Vector3 viewDir = player.position - new Vector3(transform.position.x, player.position.y, transform.position.z);
+        orientation.forward = viewDir.normalized;
+
+        // roate player object
+        if(currentStyle == CameraStyle.Basic || currentStyle == CameraStyle.Topdown)
+        {
+            float horizontalInput = Input.GetAxis("Horizontal");
+            float verticalInput = Input.GetAxis("Vertical");
+            Vector3 inputDir = orientation.forward * verticalInput + orientation.right * horizontalInput;
+
+            if (inputDir != Vector3.zero)
+                playerObj.forward = Vector3.Slerp(playerObj.forward, inputDir.normalized, Time.deltaTime * rotationSpeed);
+        }
+
+        else if(currentStyle == CameraStyle.Combat)
+        {
+            Vector3 dirToCombatLookAt = combatLookAt.position - new Vector3(transform.position.x, combatLookAt.position.y, transform.position.z);
+            orientation.forward = dirToCombatLookAt.normalized;
+
+            playerObj.forward = dirToCombatLookAt.normalized;
+        }
+    }
+
+    private void SwitchCameraStyle(CameraStyle newStyle)
+    {
+        combatCam.SetActive(false);
+        thirdPersonCam.SetActive(false);
+        topDownCam.SetActive(false);
+
+        if (newStyle == CameraStyle.Basic) thirdPersonCam.SetActive(true);
+        if (newStyle == CameraStyle.Combat) combatCam.SetActive(true);
+        if (newStyle == CameraStyle.Topdown) topDownCam.SetActive(true);
+
+        currentStyle = newStyle;
+    }
 }
