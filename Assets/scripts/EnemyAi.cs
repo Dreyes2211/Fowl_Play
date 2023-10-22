@@ -7,7 +7,7 @@ public class EnemyAi : MonoBehaviour
 {
     public NavMeshAgent agent;
 
-    public Transform player;
+    public Transform Player;
 
     public LayerMask whatIsGround, whatIsPlayer;
 
@@ -27,6 +27,7 @@ public class EnemyAi : MonoBehaviour
     public float timeBetweenAttacks;
     bool alreadyAttacked;
     public GameObject projectile;
+    private Animator EnemyAnim;
 
     //States
     public float sightRange, attackRange;
@@ -34,8 +35,9 @@ public class EnemyAi : MonoBehaviour
 
     private void Awake()
     {
-        player = GameObject.Find("Player1").transform;
+        Player = GameObject.Find("Player").transform;
         agent = GetComponent<NavMeshAgent>();
+        EnemyAnim = GetComponent<Animator>();
 
         if (grounded)
         {
@@ -86,7 +88,7 @@ public class EnemyAi : MonoBehaviour
 
     private void ChasePlayer()
     {
-        agent.SetDestination(player.position);
+        agent.SetDestination(Player.position);
     }
 
     private void AttackPlayer()
@@ -94,7 +96,7 @@ public class EnemyAi : MonoBehaviour
         //Make sure enemy doesn't move
         agent.SetDestination(transform.position);
 
-        transform.LookAt(player);
+        transform.LookAt(Player);
 
         if (!alreadyAttacked)
         {
@@ -102,7 +104,9 @@ public class EnemyAi : MonoBehaviour
             Rigidbody rb = Instantiate(projectile, transform.position, Quaternion.identity).GetComponent<Rigidbody>();
             rb.AddForce(transform.forward * 32f, ForceMode.Impulse);
             rb.AddForce(transform.up * 8f, ForceMode.Impulse);
+            EnemyAnim.SetTrigger("firing rifle");
             ///End of attack code
+
 
             alreadyAttacked = true;
             Invoke(nameof(ResetAttack), timeBetweenAttacks);

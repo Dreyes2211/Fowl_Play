@@ -34,12 +34,17 @@ public class PlayerMovement : MonoBehaviour
 
     Rigidbody rb;
 
+    //animations
+    private Animator PlayerAnim;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
 
         readyToJump = true;
+
+        PlayerAnim = GetComponent<Animator>();
     }
 
     private void Update()
@@ -49,6 +54,9 @@ public class PlayerMovement : MonoBehaviour
 
         MyInput();
         SpeedControl();
+
+        PlayerAnim.SetFloat("speed", moveSpeed);
+
 
         // handle drag
         if (grounded)
@@ -91,6 +99,8 @@ public class PlayerMovement : MonoBehaviour
         else if(!grounded)
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
     }
+       
+        
 
     private void SpeedControl()
     {
