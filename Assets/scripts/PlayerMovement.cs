@@ -50,12 +50,11 @@ public class PlayerMovement : MonoBehaviour
     private void Update()
     {
         // ground check
-        grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.3f, whatIsGround);
+        grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.3f + 0.1f, whatIsGround);
 
         MyInput();
         SpeedControl();
 
-        PlayerAnim.SetFloat("speed", moveSpeed);
 
 
         // handle drag
@@ -82,7 +81,17 @@ public class PlayerMovement : MonoBehaviour
 
             Jump();
 
+
             Invoke(nameof(ResetJump), jumpCooldown);
+        }
+
+        if(!grounded || Input.GetKey(jumpKey))
+        {
+            PlayerAnim.SetBool("jump", true);
+        }
+        else if(grounded || !Input.GetKey(jumpKey))
+        {
+            PlayerAnim.SetBool("jump", false);
         }
     }
 
@@ -91,16 +100,32 @@ public class PlayerMovement : MonoBehaviour
         // calculate movement direction
         moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
 
+        
         // on ground
         if(grounded)
+        {
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
+            
+        }
 
         // in air
         else if(!grounded)
+        {
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
-    }
-       
+        }
+            
+        if(Input.GetKey("w"))
+        {
+            PlayerAnim.SetBool("Walking", true);
+        }
+        else if(!Input.GetKey("w"))
+        {
+            PlayerAnim.SetBool("Walking", false);
+        }
+
         
+    }
+
 
     private void SpeedControl()
     {
@@ -121,6 +146,7 @@ public class PlayerMovement : MonoBehaviour
 
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
     }
+
     private void ResetJump()
     {
         readyToJump = true;
